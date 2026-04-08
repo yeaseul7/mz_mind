@@ -5,20 +5,25 @@ import useGameStore from '../store/useGameStore';
 // 에셋 임포트
 import cinemaBack1 from '../assets/cinema/cinema_back1.png';
 import cinemaCharacter1 from '../assets/cinema/cinema_charater1.png';
+import cinemaBack2 from '../assets/cinema/cinema_back2.png';
+import cinemaCharacter2 from '../assets/cinema/cinema_charater2.png';
 
 const SCENES = [
   {
     id: 1,
     bg: cinemaBack1,
     character: cinemaCharacter1,
-    text: "저 먼저 들어가보겠습니다! (집가서 뭐먹지.. 제육? 돈까스? 엽떡? 행복한 고민.. 야르)",
+    align: 'right',
+    speaker: "MZ 신입",
+    text: "저 먼저 들어가보겠습니다!\n(집가서 뭐먹지.. 제육? 돈까스? 엽떡?행복한 고민.. 야르~)",
   },
-  // 추후 추가될 2장, 3장을 위한 임시 더미 데이터 (배경, 캐릭터는 아직 없음)
   {
     id: 2,
-    bg: null,
-    character: null,
-    text: "하지만 밖에는 아직 진상 손님들이...",
+    bg: cinemaBack2,
+    character: cinemaCharacter2,
+    align: 'left',
+    speaker: "사장님",
+    text: "자자 여러분, \n 즐거운 금요일이니 즐겁게 회식하고 들어갈까요? \n 시간은 오후 6시 반에 출발 하시죠 ㅎㅎ",
   },
   {
     id: 3,
@@ -31,22 +36,24 @@ const SCENES = [
 // 한 글자씩 나타나는 타이핑 효과 컴포넌트
 function TypewriterText({ text, active }) {
   const [displayedText, setDisplayedText] = useState("");
-  
+
   useEffect(() => {
-    if (!active) return;
-    
+    if (!active || !text) return;
+
     setDisplayedText("");
     let currentIndex = 0;
-    
+
     const interval = setInterval(() => {
-      if (currentIndex < text.length) {
-        setDisplayedText((prev) => prev + text[currentIndex]);
+      // charAt을 사용하여 범위를 벗어나면 빈 문자열을 반환하게 하여 undefined 방지
+      const nextChar = text.charAt(currentIndex);
+      if (nextChar) {
+        setDisplayedText((prev) => prev + nextChar);
         currentIndex++;
       } else {
         clearInterval(interval);
       }
     }, 60); // 타이핑 속도 조절
-    
+
     return () => clearInterval(interval);
   }, [text, active]);
 
@@ -68,7 +75,7 @@ export default function CinematicScreen() {
   const currentScene = SCENES[currentStep];
 
   return (
-    <div 
+    <div
       className="min-h-screen w-full bg-black flex flex-col items-center justify-center cursor-pointer select-none relative overflow-hidden"
       onClick={handleNext}
     >
@@ -78,55 +85,69 @@ export default function CinematicScreen() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.8 }}
           className="absolute inset-0"
         >
           {/* 배경 이미지 */}
           {currentScene && currentScene.bg ? (
-            <img 
-              src={currentScene.bg} 
-              alt="Cinematic Background" 
-              className="absolute inset-0 w-full h-full object-cover opacity-70"
+            <img
+              src={currentScene.bg}
+              alt="Cinematic Background"
+              className="absolute inset-0 w-full h-full object-cover opacity-80"
             />
           ) : (
-            <div className="absolute inset-0 bg-gray-900 opacity-70" />
+            <div className="absolute inset-0 bg-gray-900 opacity-80" />
           )}
 
-          <div className="absolute inset-0 w-full h-full max-w-7xl mx-auto relative">
-            {/* 등장인물 이미지 (우측 하단 배치) */}
+          <div className="absolute inset-0 w-full h-full max-w-[1400px] mx-auto relative overflow-hidden pointer-events-none">
+            {/* 등장인물 이미지 (align 속성에 따라 좌/우 배치) */}
             {currentScene && currentScene.character && (
-              <motion.img 
-                initial={{ x: 100, opacity: 0 }}
+              <motion.img
+                initial={{ x: currentScene.align === 'left' ? -50 : 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2, type: "spring", bounce: 0.4 }}
-                src={currentScene.character} 
-                alt="Cinematic Character" 
-                className="absolute bottom-[-5vh] md:bottom-[-10vh] right-[-10vw] md:right-[-5vw] w-[450px] md:w-[700px] max-w-none object-contain drop-shadow-2xl z-10 origin-bottom"
+                transition={{ delay: 0.2, type: "spring", bounce: 0.2 }}
+                src={currentScene.character}
+                alt="Cinematic Character"
+                className={`absolute bottom-[-5vh] md:bottom-[-2vh] w-[600px] md:w-[1100px] max-w-none object-contain drop-shadow-2xl z-10 origin-bottom pointer-events-none ${
+                  currentScene.align === 'left' ? 'left-[-15vw] md:left-[-5vw]' : 'right-[-15vw] md:right-[-5vw]'
+                }`}
               />
             )}
-
-            {/* 말풍선 영역 (캐릭터 머리 맡인 좌상단 쪽으로 배치) */}
-            {currentScene && currentScene.text && (
-              <motion.div 
-                initial={{ y: 20, opacity: 0, scale: 0.9 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="absolute bottom-[50vh] md:bottom-[55vh] right-[10vw] md:right-[35vw] bg-white text-gray-900 px-8 py-6 md:px-10 md:py-8 rounded-[2.5rem] rounded-br-[0.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.8)] max-w-[80vw] md:max-w-xl z-20 border-4 border-gray-200"
-              >
-                <p className="text-xl md:text-3xl font-bold leading-relaxed whitespace-pre-wrap break-keep min-h-[90px] md:min-h-[120px]">
-                  {/* 말풍선 속의 텍스트가 타이핑됨 */}
-                  <TypewriterText text={currentScene.text || ""} active={true} />
-                </p>
-                {/* 꼬리표 (말풍선 꼬리) */}
-                <div className="absolute -bottom-4 right-12 w-8 h-8 bg-white border-b-4 border-r-4 border-gray-200 rotate-45" />
-              </motion.div>
-            )}
           </div>
+
+          {/* 하단 대화창 (비주얼 노벨 스타일 Box) */}
+          {currentScene && currentScene.text && (
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-black/70 border-4 border-white/30 rounded-xl px-10 py-8 z-30 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-md flex flex-col"
+            >
+              {/* 화자 이름 */}
+              <div className="text-amber-400 font-black text-2xl md:text-3xl mb-4 tracking-wider drop-shadow-md">
+                {currentScene.speaker || "알바생"}
+              </div>
+
+              <div className="text-gray-100 text-xl md:text-3xl font-semibold leading-relaxed min-h-[90px] md:min-h-[110px] break-keep whitespace-pre-wrap">
+                {/* 타이핑 효과가 적용된 대사 */}
+                <TypewriterText text={currentScene.text} active={true} />
+              </div>
+
+              {/* 다음으로 넘어가기 깜빡임 화살표 */}
+              <motion.div
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                className="absolute bottom-6 right-8 text-white/60 text-2xl"
+              >
+                ▼
+              </motion.div>
+            </motion.div>
+          )}
         </motion.div>
       </AnimatePresence>
 
-      {/* 액션 가이드 UI 영역 (스킵 & 넘기기) - 그대로 유지 */}
-      <button 
+      {/* 액션 가이드 UI 영역 (상단 스킵 버튼) */}
+      <button
         onClick={(e) => {
           e.stopPropagation();
           finishCinematic();
@@ -135,14 +156,6 @@ export default function CinematicScreen() {
       >
         Skip ⏭
       </button>
-
-      <motion.div 
-        animate={{ opacity: [0.2, 1, 0.2] }}
-        transition={{ repeat: Infinity, duration: 2 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 text-white/70 text-md font-bold tracking-widest bg-black/50 px-8 py-3 border border-white/10 rounded-full backdrop-blur-sm pointer-events-none"
-      >
-        화면을 터치해서 다음으로
-      </motion.div>
     </div>
   );
 }
